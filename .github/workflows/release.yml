@@ -14,10 +14,10 @@ jobs:
         with:
           submodules: true
       - run: sudo apt-get update && sudo apt-get install libboost-test-dev -y
-      - run: cmake . -DPATCH_VERSION=${{ github.run_number }} -DWITH_BOOST_TEST=ON
-      - run: cmake --build .
-      - run: cmake --build . --target test
-      - run: cmake --build . --target package
+      - run: conan install . --output-folder=build --build=missing
+      - run: cmake -S . -B  build -DPATCH_VERSION=${{ github.run_number }}-DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build
+      - run: ctest --test-dir build
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
