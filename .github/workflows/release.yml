@@ -17,7 +17,7 @@ jobs:
       - run: pip3 install conan 
       - run: conan profile detect
       - run: conan install . --output-folder=build --build=missing 
-      - run: cmake -S . -B  build -DPATCH_VERSION=${{ github.run_number }}-DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+      - run: cmake -S . -B  build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build
       - run: ctest --test-dir build
       - name: Create Release
