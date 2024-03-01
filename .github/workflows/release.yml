@@ -13,7 +13,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: true
-      - run: sudo apt-get update && sudo apt-get install libboost-test-dev -y
+      - run: sudo apt-get update 
+      - run: pip3 install conan
       - run: conan install . --output-folder=build --build=missing
       - run: cmake -S . -B  build -DPATCH_VERSION=${{ github.run_number }}-DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
       - run: cmake --build build
