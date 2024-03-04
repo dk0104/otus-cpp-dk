@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 set(PATCH_VERSION
     "1"
-    CACHE INTERNAL "Patch version")
+    CACHE INTERNAL "!!! Patch version !!! ")
 message(STATUS "Patch version: ${PATCH_VERSION}")
 set(PROJECT_VESRION 0.0.${PATCH_VERSION})
 message(STATUS "Project version: ${PROJECT_VESRION}")

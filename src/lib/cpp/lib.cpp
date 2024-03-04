@@ -1,10 +1,12 @@
-#include "lib.h"
+#include "../hpp/lib.h"
 
+#include <string>
 #include <version.h>
 
 
 
 int version() {
 	//return PROJECT_VERSION_PATCH;
-	return TEMPLATE_LIB_BUILD_VALID;
+	return std::stoi(VER_CNT);
+
 }
