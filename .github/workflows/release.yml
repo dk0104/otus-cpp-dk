@@ -19,6 +19,7 @@ jobs:
       - run: conan install . --output-folder=build --build=missing
       - run: cmake -S . -B  build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DPATCH_VERSION=${{ github.run_number }}
       - run: cmake --build build
+      - run: cmake --build build --target package
       - run: ctest --test-dir build
       - name: Create Release
         id: create_release
