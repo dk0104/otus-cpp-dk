@@ -1,0 +1,90 @@
+* Otus Course Notes
+** Build Systems
+*** CMAKE
+**** CMAKE tipps and tricks
+[[https://habr.com/en/articles/330902/][10 Advices on CMAKE]]
++ CMAKE Functions
+
+#+begin_comment
+
+function(custom_enable_cxx17 TARGET)
+    target_compile_features(${TARGET} PUBLIC cxx_std_17)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set_target_properties(${TARGET} PROPERTIES COMPILE_FLAGS "/std:c++latest")
+    elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+        set_target_properties(${TARGET} PROPERTIES COMPILE_FLAGS "-stdlib=libc++ -pthread")
+        target_link_libraries(${TARGET} c++experimental pthread)
+    endif()
+endfunction(custom_enable_cxx17)
+#+end_comment
+
+pro: Local usage of custom target macros etc.
+contra: Tend to screw the visibility of bigger projects
+
++ CMAKE Command Line Tool
+[[https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool][Run a Command-]]
+
+** CI/CD
+** Auto , lambda , tuple
+
+*** Lambda expressions
+**** Lambda expressions without an explicit template parameter list
+Basic syntax [captures](params){boby}
+- captures
+**** lambda expr with explicit template param list
+*** Auto
+**** Exercise
+#+begin_src C++ :includes <iostream> <typeinfo> :namespaces std :main no
+template <typename T>
+void func1(T param) {
+   cout << "Func 1 param : " <<  typeid(param).name() << endl;
+}
+template <typename T>
+void func2(T& param) {
+   cout << "Func 2 param : " <<  typeid(param).name() << endl;
+}
+template <typename T>
+void func3(T* param) {
+
+}
+template <typename T>
+void func4(T&& param) {
+
+}
+
+int  main(){
+    int i = 10;
+    const int ci = 15;
+    const int &cir = ci;
+    int * pi = &i;
+    const int * cpi = &i;
+
+    func1(i);
+    func2(ci);
+}
+
+#+end_src
+
+#+RESULTS:
+| Func | 1 | param | : | i |
+| Func | 2 | param | : | i |
+
+*** Tuple
+#+begin_quote
+
+Tupple defenition
+#+end_quote
+
+#+begin_src C++  :includes <iostream>
+
+
+#+end_src
+
+#+RESULTS:
+: test
+** Move, variadic templates
+*** Move
+#+begin_quote
+In C++11, std::move is a standard library function that casts (using static_cast) its argument into an r-value reference, so that move semantics can be invoked. Thus, we can use std::move to cast an l-value into a type that will prefer being moved over being copied. std::move is defined in the utility header.
+#+end_quote
+*** Variadic templates
