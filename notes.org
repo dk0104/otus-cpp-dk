@@ -23,6 +23,12 @@ contra: Tend to screw the visibility of bigger projects
 
 + CMAKE Command Line Tool
 [[https://cmake.org/cmake/help/latest/manual/cmake.1.html#run-a-command-line-tool][Run a Command-]]
+*** Conan
++ run debug / release
+  #+begin_src Shell
+        conan install . --output-folder=build --build=missing --settings=build_type=Debug
+        conan install . --output-folder=build --build=missing --settings=build_type=Realeas
+  #+end_src
 
 ** CI/CD
 ** Auto , lambda , tuple
@@ -31,10 +37,21 @@ contra: Tend to screw the visibility of bigger projects
 **** Lambda expressions without an explicit template parameter list
 Basic syntax [captures](params){boby}
 - captures
+#+begin_src C++ :includes '(<iostream> <algorithm> <functional>) :main no :flags -std=c++20 :results output
+  using namespace std;
+  float vf0[5] = {1.2, 3.4, 5.1, 8.4, 9.9};
+  function<void(float&)> out = [](float &f) {
+      cout << f << ' ';
+  };
+  for_each(vf0, vf0+5, out);
+#+end_src
+
+#+RESULTS:
+
 **** lambda expr with explicit template param list
 *** Auto
 **** Exercise
-#+begin_src C++ :includes <iostream> <typeinfo> :namespaces std :main no
+#+begin_src C++ :includes '(<iostream> <typeinfo>) :namespaces std :main no :flags -std=c++17 :results output
 template <typename T>
 void func1(T param) {
    cout << "Func 1 param : " <<  typeid(param).name() << endl;
@@ -66,22 +83,123 @@ int  main(){
 #+end_src
 
 #+RESULTS:
-| Func | 1 | param | : | i |
-| Func | 2 | param | : | i |
+: Func 1 param : i
+: Func 2 param : i
 
 *** Tuple
 #+begin_quote
-
 Tupple defenition
+Class template std::tuple is a fixed-size collection of heterogeneous values. It is a generalization of std::pair.
+If std::is_trivially_destructible<Ti>::value is true for every Ti in Types, the destructor of std::tuple is trivial.
+
 #+end_quote
 
-#+begin_src C++  :includes <iostream>
+#+begin_src C++  :includes <iostream> <string> <tuple> :flags -std=c++17 :main no :results output
+using namespace std;
+tuple<double, char,string> get_student(int id ){
+    switch (id) {
+        case 0: return {3.8, 'A', "Lisa Simpson"};
+        case 1: return {2.9, 'C', "Milhouse Van Houten"};
+        case 2: return {1.7, 'D', "Ralph Wiggum"};
+        case 3: return {0.6, 'F', "Bart Simpson"};
+        }
+    throw std::invalid_argument("id");
+    }
 
+int main()
+{
+    const auto student0 = get_student(0);
+    std::cout << "ID: 0, "
+              << "GPA: " << std::get<0>(student0) << ", "
+              << "grade: " << std::get<1>(student0) << ", "
+              << "name: " << std::get<2>(student0) << '\n';
+
+    const auto student1 = get_student(1);
+    std::cout << "ID: 1, "
+              << "GPA: " << std::get<double>(student1) << ", "
+              << "grade: " << std::get<char>(student1) << ", "
+              << "name: " << std::get<std::string>(student1) << '\n';
+
+    double gpa2;
+    char grade2;
+    string name2;
+    tie(gpa2, grade2, name2) = get_student(2);
+    cout << "ID: 2, "
+              << "GPA: " << gpa2 << ", "
+              << "grade: " << grade2 << ", "
+              << "name: " << name2 << '\n';
+
+    // C++17 structured binding:
+    const auto [gpa3, grade3, name3] = get_student(3);
+    cout << "ID: 3, "
+              << "GPA: " << gpa3 << ", "
+              << "grade: " << grade3 << ", "
+              << "name: " << name3 << '\n';
+}
 
 #+end_src
 
 #+RESULTS:
-: test
+: ID: 0, GPA: 3.8, grade: A, name: Lisa Simpson
+: ID: 1, GPA: 2.9, grade: C, name: Milhouse Van Houten
+: ID: 2, GPA: 1.7, grade: D, name: Ralph Wiggum
+: ID: 3, GPA: 0.6, grade: F, name: Bart Simpson
+
++ exercise example
+#+NAME: tuple example
+#+begin_src C++ :includes <string> <tuple> <cassert> <iostream> :flags -std=c++20 :results output :main no
+
+using namespace std;
+auto getPerson() {
+        const string name = "Petia";
+        const string secondName = "Ivanoff";
+        const size_t age = 23;
+        const string department = "Sale";
+        return make_tuple(name, secondName, age, department);
+}
+struct custom_tie {
+    custom_tie(string&  name, string& secondName , size_t& age, string& department){
+        name = mName;
+        secondName = mSecondName;
+        age = mAge;
+        department = mDepartment;
+    };
+    custom_tie& operator = (const tuple<string,string,size_t,string>& ref) {
+        const auto [fName, sName,cAge,cDepartment] = ref;
+        mName=fName;
+        mSecondName=sName;
+        mAge = cAge;
+        mDepartment = cDepartment;
+        cout<< "Name : " << fName << " Second  name : " << sName << " department: " << cDepartment << endl;
+        return *this;
+        };
+    string mName;
+    string mSecondName;
+    size_t mAge;
+    string mDepartment;
+
+};
+
+int main(int argc, char * argv[]) {
+        string name, secondName, department;
+        size_t age;
+        custom_tie(name, secondName, age, department) = getPerson();
+        cout<< "Name : " << name << " Second  name : " << secondName << "department" << department << endl;
+        assert(name == "Petia");
+        assert(secondName == "Ivanoff");
+        assert(age == 23);
+        assert(department == "Sale");
+return 0;
+}
+
+#+end_src
+
+#+RESULTS: tuple example
+: Name : Petia Second  name : Ivanoff department: Sale
+: Name :  Second  name : department
+
+#+RESULTS:
+
 ** Move, variadic templates
 *** Move
 #+begin_quote
