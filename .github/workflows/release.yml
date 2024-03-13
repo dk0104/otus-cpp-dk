@@ -16,7 +16,7 @@ jobs:
       - run: sudo apt-get update
       - run: pip3 install conan
       - run: conan profile detect
-      - run: conan install . --output-folder=build --build=missing
+      - run: conan install . --output-folder=build --build=missing --settings=build_type=Release
       - run: cmake -S . -B  build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release -DPATCH_VERSION=${{ github.run_number }}
       - run: cmake --build build
       - run: cmake --build build --target package
