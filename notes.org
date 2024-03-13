@@ -27,7 +27,7 @@ contra: Tend to screw the visibility of bigger projects
 + run debug / release
   #+begin_src Shell
         conan install . --output-folder=build --build=missing --settings=build_type=Debug
-        conan install . --output-folder=build --build=missing --settings=build_type=Realeas
+        conan install . --output-folder=build --build=missing --settings=build_type=Realease
   #+end_src
 
 ** CI/CD
