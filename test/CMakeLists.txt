@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
 project(temlpate_Test CXX)
+find_package(GTest)
+enable_testing()
 include(GoogleTest)
 include(../CMake/DefaultCXX.cmake)
 
