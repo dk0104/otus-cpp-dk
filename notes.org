@@ -32,7 +32,6 @@ contra: Tend to screw the visibility of bigger projects
 
 ** CI/CD
 ** Auto , lambda , tuple
-
 *** Lambda expressions
 **** Lambda expressions without an explicit template parameter list
 Basic syntax [captures](params){boby}
@@ -157,34 +156,21 @@ auto getPerson() {
         const string department = "Sale";
         return make_tuple(name, secondName, age, department);
 }
-struct custom_tie {
-    custom_tie(string&  name, string& secondName , size_t& age, string& department){
-        name = mName;
-        secondName = mSecondName;
-        age = mAge;
-        department = mDepartment;
-    };
-    custom_tie& operator = (const tuple<string,string,size_t,string>& ref) {
-        const auto [fName, sName,cAge,cDepartment] = ref;
-        mName=fName;
-        mSecondName=sName;
-        mAge = cAge;
-        mDepartment = cDepartment;
-        cout<< "Name : " << fName << " Second  name : " << sName << " department: " << cDepartment << endl;
-        return *this;
-        };
-    string mName;
-    string mSecondName;
-    size_t mAge;
-    string mDepartment;
 
-};
+template<typename... Args,typename Func>
+auto custom_tie(Args&&... args,Func func){
+    auto result = func();
+    auto[name,secondName,age,department] = result;
+    tie(args...) = forward<decltype(result)>(result);
+}
 
 int main(int argc, char * argv[]) {
         string name, secondName, department;
         size_t age;
+        // Call custom_tie to assign values
         custom_tie(name, secondName, age, department) = getPerson();
         cout<< "Name : " << name << " Second  name : " << secondName << "department" << department << endl;
+
         assert(name == "Petia");
         assert(secondName == "Ivanoff");
         assert(age == 23);
@@ -195,14 +181,390 @@ return 0;
 #+end_src
 
 #+RESULTS: tuple example
-: Name : Petia Second  name : Ivanoff department: Sale
-: Name :  Second  name : department
-
-#+RESULTS:
 
 ** Move, variadic templates
 *** Move
 #+begin_quote
 In C++11, std::move is a standard library function that casts (using static_cast) its argument into an r-value reference, so that move semantics can be invoked. Thus, we can use std::move to cast an l-value into a type that will prefer being moved over being copied. std::move is defined in the utility header.
 #+end_quote
+
 *** Variadic templates
+#+begin_src C++
+
+#+end_src
+
+** Literal / Chrono
+***  Custom literal
+#+begin_src C++
+auto a = 42_kg;
+// operator "" _kg(unsigned long long value)
+
+#+end_src
+
+** Constexpr
+** Autopointer
+*** RAII Resource aquisition is initialisation
+#+begin_quote
+RAII Resource acquisition is initialization (RAII)[1] is a programming idiom[2] used in several object-oriented, statically typed programming languages to describe a particular language behavior. In RAII, holding a resource is a class invariant, and is tied to object lifetime. Resource allocation (or acquisition) is done during object creation (specifically initialization), by the constructor, while resource deallocation (release) is done during object destruction (specifically finalization), by the destructor. In other words, resource acquisition must succeed for initialization to succeed. Thus the resource is guaranteed to be held between when initialization finishes and finalization starts (holding the resources is a class invariant), and to be held only when the object is alive. Thus if there are no object leaks, there are no resource leaks.
+#+end_quote
+
+#+begin_src C++ :includes '(<iostream> <algorithm> <functional>) :main no :flags -std=c++20 :results output
+void WriteToFile(const std::string& message) {
+  // |mutex| is to protect access to |file| (which is shared across threads).
+  static std::mutex mutex;
+
+  // Lock |mutex| before accessing |file|.
+  std::lock_guard<std::mutex> lock(mutex);
+
+  // Try to open file.
+  std::ofstream file("example.txt");
+  if (!file.is_open()) {
+    throw std::runtime_error("unable to open file");
+  }
+
+  // Write |message| to |file|.
+  file << message << std::endl;
+
+}
+#+end_src
+
+*** CRTP
+#+begin_quote
+The curiously recurring template pattern (CRTP) is an idiom, originally in C++, in which a class X derives from a class template instantiation using X itself as a template argument.[1] More generally it is known as F-bound polymorphism, and it is a form of F-bounded quantification.
+#+end_quote
+
+**** Polymorphic chaining
+#+begin_src C++ :includes '(<iostream> <algorithm> <functional>) :main no :flags -std=c++20 :results output
+class Printer
+{
+public:
+    Printer(ostream& pstream) : m_stream(pstream) {}
+
+    template <typename T>
+    Printer& print(T&& t) { m_stream << t; return *this; }
+
+    template <typename T>
+    Printer& println(T&& t) { m_stream << t << endl; return *this; }
+private:
+    ostream& m_stream;
+};
+
+class CoutPrinter : public Printer
+{
+public:
+    CoutPrinter() : Printer(cout) {}
+
+    CoutPrinter& SetConsoleColor(Color c)
+    {
+        // ...
+        return *this;
+    }
+};
+#+end_src
+
+*** Weak ptr
+
+#+begin_src C++ :includes '(<iostream> <algorithm> <functional> <cassert>) :main no :flags -std=c++20 :results output
+using namespace std;
+
+struct Observer {
+  public:
+    explicit Observer(int value) : m_value(value) {}
+
+    void notify() { std::cout << "notify: " << m_value << std::endl; }
+
+  private:
+    int m_value;
+};
+
+struct Observable {
+    void registerObserver(const std::shared_ptr<Observer> &observer) {
+        m_observers.emplace_back(observer);
+    }
+
+    void notify() {
+        for (auto &obs : m_observers) {
+            auto ptr = obs;
+            auto p = ptr.lock();
+            if (p)
+                p->notify();
+        }
+    }
+
+  private:
+    std::vector<std::weak_ptr<Observer>> m_observers;
+};
+
+void observer_test() {
+    Observable observable;
+    auto obs1 = make_shared<Observer>(1);
+    observable.registerObserver(obs1);
+
+    auto obs2 = make_shared<Observer>(2);
+    observable.registerObserver(obs2);
+
+    auto obs3 = make_shared<Observer>(3);
+    observable.registerObserver(obs3);
+
+    {
+        auto obs4 = make_shared<Observer>(4);
+        observable.registerObserver(obs4);
+    }
+
+    observable.notify();
+}
+
+void weak_ptr_example() {
+    weak_ptr<int> weak;
+    {
+        auto shared = make_shared<int>(42);
+        weak = shared;
+        auto x = weak.lock();
+        assert(x);
+    }
+    auto x = weak.lock();
+    assert(!x);
+}
+
+int main() {
+
+    weak_ptr_example();
+    observer_test();
+
+    return 0;
+}
+
+#+end_src
+
+#+RESULTS:
+: notify: 1
+: notify: 2
+: notify: 3
+
+*** Smart ptr
+
+#+begin_src C++ :includes '(<iostream> <algorithm> <functional> <cassert>) :main no :flags -std=c++20 :results output
+
+#include <iostream>
+
+template <typename T>
+class smart_ptr {
+    T *ptr;
+
+  public:
+    smart_ptr(T *ptr_) : ptr{ptr_} {}
+    ~smart_ptr() { delete ptr; }
+    T *get() { return ptr; }
+    T *operator->() { return ptr; }
+    T &operator*() { return *ptr; }
+};
+
+class A {
+  public:
+    A() { std::cout << __PRETTY_FUNCTION__ << std::endl; }
+    ~A() { std::cout << __PRETTY_FUNCTION__ << std::endl; }
+};
+
+void example() {
+    smart_ptr<int> ptr(new int{10});
+}
+
+template <typename T>
+void foo(smart_ptr<T> ptr) {
+    std::cout << ptr.get() << std::endl;
+}
+
+void double_free() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    smart_ptr<A> ptr(new A);
+}
+
+
+void double_free2() {
+    std::cout << __PRETTY_FUNCTION__ << std::endl;
+    smart_ptr<A> ptr(new A);
+    foo(ptr);
+}
+
+int main() {
+
+    double_free();
+    double_free2();
+    return 0;
+}
+#+end_src
+
+#+RESULTS:
+: void double_free()
+: A::A()
+: A::~A()
+: void double_free2()
+: A::A()
+: 0x600000f30030
+: A::~A()
+: A::~A()
+
+** Allocator
+Allocator could be used for:
+
+- Impl. Memory allocation strategy
+- Custom memory allocation for example on GPU
+- Memory allocation tracing counting
+- Avoiding memory fragmentation
+- Special environments , embeded systems etc.
+
+
+***  Simple Allocator
+#+begin_quote
+The std::allocator class template is the default Allocator used by all standard library containers if no user-specified allocator is provided. The default allocator is stateless, that is, all instances of the given allocator are interchangeable, compare equal and can deallocate memory allocated by any other instance of the same allocator type.
+#+end_quote
+
+**** Defalut allocator behavior
+- Stateless
+- Allocate
+- Deallocate
+- Destroy
+**** Allocator evolution overview
+
+| C++03              | c++ 11      |
+| 7 Typedefs         | 1 Typedef   |
+| 2 Ctor             | 2 Ctor      |
+| 2 Op               | 2 Op        |
+| 7 functions        | 2 Functions |
+| 1 Embeded Template |             |
+
+The reduction of the boilerplate code is achieved through the usage of std::allocator_traits  abstraction layer
+
+
+**** Stateless Allocator
+
+#+NAME: Allocator Template
+#+begin_src C++ :includes <iostream> <algorithm> <vector> <memory> <map> :main no :flags -std=c++20 :results output
+
+template <class T>
+struct std_03_allocator {
+    typedef T value_type;
+    typedef T* pointer;
+    typedef const T* const_pointer;
+    typedef T& reference;
+    typedef const T& const_reference;
+
+    std_03_allocator () noexcept {}
+    template <class U> std_03_allocator  (const std_03_allocator <U>&) noexcept {}
+
+    T* allocate (std::size_t n)
+    {
+        return static_cast<T*>(::operator new(n*sizeof(T)));
+    }
+    void deallocate (T* p, std::size_t n)
+    {
+        ::operator delete(p);
+    }
+
+    template <class Up, class... Args>
+    void construct(Up* p, Args&&... args) {
+        ::new ((void*)p) Up(std::forward<Args>(args)...);
+    }
+
+    void destroy(pointer p) {
+        p->~T();
+    }
+
+    template< class U >
+    struct rebind
+    {
+        typedef std_03_allocator<U> other;
+    };
+};
+
+#+end_src
+
+
+
+
+
+* Assignmenst
+** IP Filter
+Реализуем утилиту для эффективной сортировки и фильтрации лога IP-адресов. Продолжаем пользоваться сборочной фермой для публикации пакета.
+Программа из стандартного ввода читает данные. Данные хранятся построчно. Каждая строка состоит из трех полей, разделенных одним символом табуляции, и завершается символом конца строки.
+Формат строки:
+text1 \t text2 \t text3 \n
+
+Поля text2 и text3 игнорируются. Поле text1 имеет следующую структуру (ip4 address):
+n1.n2.n3.n4
+где n1..4 – целое число от 0 до 255.
+
+Требуется загрузить список ip-адресов в память и отсортировать их в обратном
+лексикографическом порядке. Пример лексикографической сортировки (по первому числу, затем по второму и так далее):
+
+1.1.1.1
+1.2.1.1
+1.10.1.1
+
+Соответственно, обратная:
+
+1.10.1.1
+1.2.1.1
+1.1.1.1
+
+#+begin_quote
+
+💡
+Обратите внимание – сортировка выполняется в байтовом (численном) представлении IP-адреса, а не в строковом. Поэтому адрес, например, 1.2.1.1 меньше адреса 1.10.1.1 (ведь 2 < 10).
+Далее выводим в стандартный вывод следующее:
+Полный список адресов после сортировки. Одна строка - один адрес.
+Сразу следом список адресов, первый байт которых равен 1. Порядок сортировки не меняется.
+Одна строка - один адрес. Списки ничем не разделяются.
+Сразу продолжается список адресов, первый байт которых равен 46, а второй 70. Порядок
+сортировки не меняется. Одна строка - один адрес. Списки ничем не разделяются.
+Сразу продолжается список адресов, любой байт которых равен 46. Порядок сортировки не
+меняется. Одна строка - один адрес. Списки ничем не разделяются.
+
+#+end_quote
+
+*** Требования к реализации
+
+В приложенном к заданию исходном файле необходимо заменить, где это возможно,
+конструкции на аналогичные из стандарта С++14/C++17. Реализовать недостающий функционал.
+Не обязательно следовать приложенному шаблону. Можно выполнить задание, оформив код
+любым корректным способом.
+Лишний раз проверьте
+лексикографическая сортировка понятна как для строки, так и для контейнера
+выбрана соответствующая задаче структура данных
+Самопроверка
+
+Макет исходного кода, а также тестовый файл с данными ip_filter.tsv прилагается к материалам
+занятия. Проверить себя можно следующим образом (Linux):
+
+cat ip_filter.tsv | ip_filter | md5sum
+
+24e7a7b2270daee89c64d3ca5fb3da1a -
+
+** Allocator
+*** Реализуем собственный STL-совместимый аллокатор, используем его в стандартных контейнерах. Пишем свой контейнер, поддерживающий параметризацию аллокатором по аналогии с STL.
+
+Реализовать свой аллокатор памяти, который позволит выполнять операцию резервирования памяти. Далее использовать этот аллокатор с контейнером std::map.
+Аллокатор должен параметризоваться количеством выделяемых за раз элементов. Освобождение конкретного элемента не предполагается - аллокатор должен освобождать всю память самостоятельно.
+Аллокатор работает с фиксированным количеством элементов. Попытку выделить большее число элементов считать ошибкой.
+Опционально реализовать расширяемость аллокатора. При попытке выделить число элементов, которое превышает текущее зарезервированное количество, аллокатор расширяет зарезервированную память.
+Опционально реализовать поэлементное освобождение.
+
+**** Цель такого аллокатора – снизить количество операций выделения памяти.
+Реализовать свой контейнер, который по аналогии с контейнерами stl параметризуется
+аллокатором. Контейнер должен иметь две возможности - добавить новый элемент и обойти контейнер в одном направлении.
+Опционально реализовать совместимость с контейнерами stl – итераторы, вспомогательные методы size, empty и т.д.
+
+**** Цель реализации своего контейнера – попробовать использовать std::allocator, а также свой аллокатор.
+
+**** Прикладной код должен содержать следующие вызовы:
+
+- создание экземпляра std::map<int, int>
+- заполнение 10 элементами, где ключ - это число от 0 до 9, а значение - факториал ключа
+- создание экземпляра std::map<int, int> с новым аллокатором, ограниченным 10 элементами
+- заполнение 10 элементами, где ключ - это число от 0 до 9, а значение - факториал ключа
+- вывод на экран всех значений (ключ и значение разделены пробелом) хранящихся в контейнере
+- создание экземпляра своего контейнера для хранения значений типа int
+- заполнение 10 элементами от 0 до 9
+- создание экземпляра своего контейнера для хранения значений типа int с новым аллокатором, ограниченным 10 элементами
+- заполнение 10 элементами от 0 до 9
+- вывод на экран всех значений, хранящихся в контейнере

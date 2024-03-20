@@ -1,6 +1,4 @@
-#ifndef IPFILTER_H_
-#define IPFILTER_H_
-
+#pragma once
 #include <fstream>
 #include <iostream>
 #include <istream>
@@ -38,5 +36,3 @@ public:
 protected:
   std::vector<IpAddrType> ip_pool;
 };
-
-#endif // IPFILTER_H_

@@ -32,6 +32,7 @@ IpFilter::IpFilter(std::ifstream &in) {
 
   auto split = [](const std::string &str, char d) {
     std::vector<std::string> r;
+    r.reserve(42);
 
     std::string::size_type start = 0;
     std::string::size_type stop = str.find_first_of(d);
