@@ -1,3 +1,11 @@
+:PROPERTIES:
+#+property: header-args:C++ :main no :flags -std=c++20 :results output
+:END:
+
+#+title Otus C++ course notes
+#+author: Denis Keksel
+#+email: denis.keksel@keksel.biz
+
 * Otus Course Notes
 ** Build Systems
 *** CMAKE
@@ -50,7 +58,8 @@ Basic syntax [captures](params){boby}
 **** lambda expr with explicit template param list
 *** Auto
 **** Exercise
-#+begin_src C++ :includes '(<iostream> <typeinfo>) :namespaces std :main no :flags -std=c++17 :results output
+#+begin_src C++ :includes '(<iostream> <typeinfo>)
+using namespace std;
 template <typename T>
 void func1(T param) {
    cout << "Func 1 param : " <<  typeid(param).name() << endl;
@@ -82,8 +91,8 @@ int  main(){
 #+end_src
 
 #+RESULTS:
-: Func 1 param : i
-: Func 2 param : i
+| Func | 1 | param | : | i |
+| Func | 2 | param | : | i |
 
 *** Tuple
 #+begin_quote
@@ -93,7 +102,7 @@ If std::is_trivially_destructible<Ti>::value is true for every Ti in Types, the 
 
 #+end_quote
 
-#+begin_src C++  :includes <iostream> <string> <tuple> :flags -std=c++17 :main no :results output
+#+begin_src C++  :includes <iostream> <string> <tuple> :flags -std=c++20 :main no :results output
 using namespace std;
 tuple<double, char,string> get_student(int id ){
     switch (id) {
@@ -261,6 +270,8 @@ public:
     }
 };
 #+end_src
+
+#+RESULTS:
 
 *** Weak ptr
 
@@ -436,21 +447,40 @@ The std::allocator class template is the default Allocator used by all standard 
 The reduction of the boilerplate code is achieved through the usage of std::allocator_traits  abstraction layer
 
 
-**** Stateless Allocator
+**** Simple Allocator
+- the simple allocator example consest of severaal typedefs and functions which are covert with an abstracion layer allocator traits on recent compiler vessions
+- Rebind is used in order to provide access to nested types def: Rebind A structure that enables an allocator for objects of one type to allocate storage for objects of another type.i
 
-#+NAME: Allocator Template
+#+NAME: Simple_allocator
 #+begin_src C++ :includes <iostream> <algorithm> <vector> <memory> <map> :main no :flags -std=c++20 :results output
+using namespace std;
+template <typename T, typename Alloc>
+class CutomList {
+    struct Node {
+        Node* next;
+        T val;
+    };
+public:
+        void push_back(const T& val)
+        {
+                typename Alloc::template rebind<Node>::other nodeAlloc;
+                Node* newNode = nodeAlloc.allocate(1);
+        }
+private:
+   Node* head;
+   Alloc allocator;
+};
 
 template <class T>
-struct std_03_allocator {
+struct simple_allocator {
     typedef T value_type;
     typedef T* pointer;
     typedef const T* const_pointer;
     typedef T& reference;
     typedef const T& const_reference;
 
-    std_03_allocator () noexcept {}
-    template <class U> std_03_allocator  (const std_03_allocator <U>&) noexcept {}
+    simple_allocator () noexcept {}
+    template <class U> simple_allocator  (const simple_allocator <U>&) noexcept {}
 
     T* allocate (std::size_t n)
     {
@@ -473,12 +503,116 @@ struct std_03_allocator {
     template< class U >
     struct rebind
     {
-        typedef std_03_allocator<U> other;
+        typedef simple_allocator<U> other;
     };
+
+    int main() {
+        return 0;
+    }
 };
+
+int main(int, char *[]) {
+    auto v = vector<int,simple_allocator<int>>{};
+    for(int i = 0; i < 6 ; i++) {
+        cout << "vector size : " << v.size() << std::endl;
+        v.push_back(i);
+    }
+
+    return 0;
+}
 
 #+end_src
 
+#+RESULTS: Simple_allocator
+: vector size : 0
+: vector size : 1
+: vector size : 2
+: vector size : 3
+: vector size : 4
+: vector size : 5
+
+#+RESULTS: Simple allocator with Custom_Container
+: vector size : 0
+: vector size : 1
+: vector size : 2
+: vector size : 3
+: vector size : 4
+: vector size : 5
+
+**** Allocator pool
+
+#+NAME: pool_allocator
+#+begin_src C++ :includes <iostream> <algorithm> <vector> <memory> <map> :main no :flags -std=c++20 :results output : :noweb yes
+using namespace std;
+template <class T>
+struct pool_allocator {
+    typedef T value_type;
+
+    static int pos;
+    static constexpr int size = sizeof(T) * 1000;
+    static uint8_t data[size];
+
+    pool_allocator () noexcept {}
+    ~pool_allocator() {}
+
+    template <class U> pool_allocator  (const pool_allocator <U>&) noexcept {}
+
+    T* allocate (std::size_t n) {
+        cout << "allocate  pos: " << pos << " Size: " << size << endl;
+        if (pos + n > size)
+            throw std::bad_alloc();
+
+        int cur = pos;
+        pos += n;
+        return reinterpret_cast<T*>(data) + cur;
+    }
+
+    void deallocate (T* p, std::size_t n) {}
+
+    template< class U >
+    struct rebind
+    {
+        typedef pool_allocator<U> other;
+    };
+};
+
+template <typename T>
+uint8_t pool_allocator<T>::data[size];
+
+template <typename T>
+int pool_allocator<T>::pos = 0;
+
+
+template <class T, class U>
+constexpr bool operator== (const pool_allocator<T>& a1, const pool_allocator<U>& a2) noexcept
+{
+    return true;
+}
+
+template <class T, class U>
+constexpr bool operator!= (const pool_allocator<T>& a1, const pool_allocator<U>& a2) noexcept
+{
+    return false;
+}
+
+int main(int, char* []) {
+
+    pool_allocator<int>  first;
+    pool_allocator<int>  second;
+    auto vectorOne = vector<int,pool_allocator<int>>{};
+    vectorOne.push_back(1);
+}
+
+#+end_src
+
+#+RESULTS: pool_allocator
+: allocate  pos: 0Size: 4000
+****  Custom allocator
+
+
+
+** Template Magic
+ https://isocpp.org/blog/2012/11/universal-references-in-c11-scott-meyers Universal references
 
 
 
@@ -489,7 +623,6 @@ struct std_03_allocator {
 Программа из стандартного ввода читает данные. Данные хранятся построчно. Каждая строка состоит из трех полей, разделенных одним символом табуляции, и завершается символом конца строки.
 Формат строки:
 text1 \t text2 \t text3 \n
-
 Поля text2 и text3 игнорируются. Поле text1 имеет следующую структуру (ip4 address):
 n1.n2.n3.n4
 где n1..4 – целое число от 0 до 255.
@@ -568,3 +701,130 @@ cat ip_filter.tsv | ip_filter | md5sum
 - создание экземпляра своего контейнера для хранения значений типа int с новым аллокатором, ограниченным 10 элементами
 - заполнение 10 элементами от 0 до 9
 - вывод на экран всех значений, хранящихся в контейнере
+
+
+#+NAME: custom_pool_allocator_solution
+#+begin_src C++ :includes <iostream> <cstddef> <map> <memory> <vector> <stdexcept> :main no :flags -std=c++20 :results output
+
+template<typename T>
+class CustomAllocator {
+public:
+    using value_type = T;
+    using pointer = T*;
+    using const_pointer = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+
+    CustomAllocator(std::size_t initialPoolSize = 100)
+        : poolSize(initialPoolSize), allocated(0) {
+            pool.reserve(initialPoolSize);
+            for (size_type i = 0; i < initialPoolSize; ++i) {
+                pool.push_back(new char[sizeof(T)]);
+            }
+        }
+
+    template<typename U>
+    CustomAllocator(const CustomAllocator<U>& other)
+        : poolSize(other.poolSize), allocated(other.allocated) {
+            pool.reserve(poolSize);
+            for (size_type i = 0; i < allocated; ++i) {
+                pool.push_back(new char[sizeof(T)]);
+            }
+        }
+
+    ~CustomAllocator() {
+        for (auto ptr : pool) {
+            delete[] ptr;
+        }
+    }
+
+    T* allocate(std::size_t n) {
+        if (n > poolSize - allocated) {
+            size_type newPoolSize = poolSize * 2;
+            while (n > newPoolSize - allocated) {
+                newPoolSize *= 2;
+            }
+            for (size_type i = poolSize; i < newPoolSize; ++i) {
+                pool.push_back(new char[sizeof(T)]);
+            }
+            poolSize = newPoolSize;
+        }
+        T* ptr = reinterpret_cast<T*>(pool[allocated]);
+        allocated += n;
+        return ptr;
+    }
+
+    void deallocate(T* ptr, std::size_t n) noexcept {
+
+    }
+
+    template<typename U, typename... Args>
+    void construct(U* ptr, Args&&... args) {
+        new(ptr) U(std::forward<Args>(args)...);
+    }
+
+    template<typename U>
+    void destroy(U* ptr) noexcept {
+        ptr->~U();
+    }
+
+    size_type max_size() const noexcept {
+        return size_type(-1) / sizeof(T);
+    }
+
+    pointer address(reference x) const noexcept {
+        return std::addressof(x);
+    }
+
+    const_pointer address(const_reference x) const noexcept {
+        return std::addressof(x);
+    }
+
+    template<class U>
+    struct rebind {
+        typedef CustomAllocator<U> other;
+    };
+
+    size_type poolSize;
+    std::vector<void*> pool;
+    std::size_t allocated;
+};
+
+template <typename T, typename U>
+bool operator==(const CustomAllocator<T>&, const CustomAllocator<U>&) noexcept {
+    return true; // Always return true since it's stateless
+}
+
+template <typename T, typename U>
+bool operator!=(const CustomAllocator<T>&, const CustomAllocator<U>&) noexcept {
+    return false; // Always return false since it's stateless
+}
+
+template<typename T>
+constexpr T factorial(T n) {
+    return n == 0 ? 1 : n * factorial(n - 1);
+}
+
+int main() {
+    const std::size_t poolSize = 10;
+    CustomAllocator<int> allocator(poolSize);
+    std::map<int, int, std::less<int>, CustomAllocator<std::pair<const int, int>>> map(allocator);
+
+    for (auto key = 0; key < poolSize; key++) {
+        map[key] = factorial(key);
+    }
+
+    for(auto[key,value] : map) {
+        map[key] = factorial(key);
+        std::cout << key << " " << map[key] << std::endl;
+    }
+
+    return 0;
+}
+
+
+#+end_src
+
+#+RESULTS: custom_pool_allocator_solution
