@@ -1,5 +1,0 @@
-#pragma once
-
-#cmakedefine01 TEMPLATE_LIB_BUILD_VALID
-#cmakedefine VER_CNT "@VER_CNT@"
-#cmakedefine VCNTALT @VER_CNT@

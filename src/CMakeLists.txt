@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.24)
-project(template_bin)
 
 
 set(CMAKE_FIND_PACKAGE_PREFER_CONFIG ON)
@@ -11,10 +10,9 @@ add_subdirectory(lib)
 include(GNUInstallDirs)
 
 
-add_executable(template main.cpp)
-target_link_libraries(template PRIVATE template-lib)
-target_compile_features(template INTERFACE cxx_std_20)
-target_compile_options(template PRIVATE -Wall -Wextra -Wpedantic)
-target_compile_options(template PRIVATE "$<$<CONFIG:Debug>:-O0>")
-install(TARGETS template EXPORT template-targets)
-
+add_executable(${PROJECT_NAME} main.cpp)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}-lib)
+target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_20)
+target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+target_compile_options(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:-O0>")
+install(TARGETS ${PROJECT_NAME} EXPORT ${PROJECT_NAME}-targets)
