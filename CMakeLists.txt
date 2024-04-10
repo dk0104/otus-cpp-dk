@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.24)
+include(CMake/DefaultCXX.cmake)
 set(PATCH_VERSION
     "1"
     CACHE INTERNAL "!!! Patch version !!! ")
 set(PROJECT_VESRION 0.0.${PATCH_VERSION})
 project(print_ip VERSION ${PROJECT_VESRION} LANGUAGES CXX)
-include(CMake/DefaultCXX.cmake)
 
 set(CMAKE_CXX_EXTENSIONS OFF)
 

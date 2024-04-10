@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(print_ip_Test CXX)
+project(print_ip_Test)
 find_package(GTest)
 enable_testing()
 include(GoogleTest)
