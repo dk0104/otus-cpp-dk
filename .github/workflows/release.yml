@@ -20,7 +20,7 @@ jobs:
       - run: cmake -S . -B  build/Release --preset conan-release -DPATCH_VERSION=${{ github.run_number }}
       - run: cmake --build build/Release --preset conan-release
       - run: cmake --build build/Release --target package
-      - run: ctest --test-dir build
+      - run: ctest --test-dir build/Release
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -38,6 +38,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./build/Release/template-0.0.${{ github.run_number }}-Linux.deb
+          asset_path: ./build/Release/print_ip-0.0.${{ github.run_number }}-Linux.deb
           asset_name: template-0.0.${{ github.run_number }}-Linux.deb
           asset_content_type: application/vnd.debian.binary-package
