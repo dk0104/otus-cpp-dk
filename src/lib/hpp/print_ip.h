@@ -22,9 +22,9 @@ template <typename T, unsigned I, unsigned M> struct TuplePrinter {
    */
 
   inline static void print(const T &t, std::ostream &out) {
-    using next = decltype(std::get<I + 1>(t));
-    using current = decltype(std::get<I>(t));
-    static_assert(std::is_same<next, current>::value,
+    const auto &next = std::get<I + 1>(t);
+    const auto &current = std::get<I>(t);
+    static_assert(std::is_same<decltype(next), decltype(current)>::value,
                   "Types in tuple must be the same");
     out << std::get<I>(t) << ".";
     TuplePrinter<T, I + 1, M>::print(t, out);
