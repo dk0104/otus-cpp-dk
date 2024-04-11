@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
+#include <list>
 #include <variant>
+#include <vector>
 
 namespace HA4 {
 
