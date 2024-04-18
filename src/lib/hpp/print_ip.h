@@ -2,6 +2,7 @@
 #include <iostream>
 #include <list>
 #include <tuple>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
@@ -98,18 +99,26 @@ void print_ip(T integerIp, std::ostream &out = std::cout) {
   out << static_cast<int>(block[0]) << std::endl;
 }
 
-/*
- *@brief print_ip - print for cbegin and cend based container
- *@param[in] container - stl container
- *@param[in] out - output stream
- */
+template <typename Container>
+typename std::enable_if<std::is_same<
+    Container, std::vector<typename Container::value_type>>::value>::type
+print_ip(const Container &cont, std::ostream &out = std::cout) {
+  auto begin_it = cont.cbegin();
+  auto end_it = cont.cend();
+  for (auto it = begin_it; it != end_it; ++it) {
+    if (it != begin_it) {
+      out << ".";
+    }
+    out << *it;
+  }
+}
 
-template <typename T, std::enable_if_t<is_iterable_v<T> &&
-                                           !std::is_same<T, std::string>::value,
-                                       bool> = true>
-void print_ip(T const &container, std::ostream &out = std::cout) {
-  auto begin_it = container.cbegin();
-  auto end_it = container.cend();
+template <typename Container>
+typename std::enable_if<std::is_same<
+    Container, std::list<typename Container::value_type>>::value>::type
+print_ip(const Container &cont, std::ostream &out = std::cout) {
+  auto begin_it = cont.cbegin();
+  auto end_it = cont.cend();
   for (auto it = begin_it; it != end_it; ++it) {
     if (it != begin_it) {
       out << ".";
