@@ -100,9 +100,13 @@ void print_ip(T integerIp, std::ostream &out = std::cout) {
 }
 
 template <typename Container>
-typename std::enable_if<std::is_same<
-    Container, std::vector<typename Container::value_type>>::value>::type
-print_ip(const Container &cont, std::ostream &out = std::cout) {
+    typename std::enable_if <
+    std::is_same<
+        Container,
+        std::vector<typename Container::value_type> ||
+            std::is_same<Container, std::list<typename Container::value_type>>
+                Container::value>::type
+    print_ip(const Container &cont, std::ostream &out = std::cout) {
   auto begin_it = cont.cbegin();
   auto end_it = cont.cend();
   for (auto it = begin_it; it != end_it; ++it) {
@@ -113,19 +117,19 @@ print_ip(const Container &cont, std::ostream &out = std::cout) {
   }
 }
 
-template <typename Container>
-typename std::enable_if<std::is_same<
-    Container, std::list<typename Container::value_type>>::value>::type
-print_ip(const Container &cont, std::ostream &out = std::cout) {
-  auto begin_it = cont.cbegin();
-  auto end_it = cont.cend();
-  for (auto it = begin_it; it != end_it; ++it) {
-    if (it != begin_it) {
-      out << ".";
-    }
-    out << *it;
-  }
-}
+// template <typename Container>
+// typename std::enable_if<std::is_same<
+//     Container, std::list<typename Container::value_type>>::value>::type
+// print_ip(const Container &cont, std::ostream &out = std::cout) {
+//   auto begin_it = cont.cbegin();
+//   auto end_it = cont.cend();
+//   for (auto it = begin_it; it != end_it; ++it) {
+//     if (it != begin_it) {
+//       out << ".";
+//     }
+//     out << *it;
+//   }
+// }
 
 /*
  *@brief print_ip - print for tuple
