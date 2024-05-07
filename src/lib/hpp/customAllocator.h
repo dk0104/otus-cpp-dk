@@ -78,7 +78,7 @@ public:
 
   size_type poolSize;
   std::vector<void *> pool;
-  std::size_t allocated;
+  size_type allocated;
 };
 
 template <typename T, typename U>
